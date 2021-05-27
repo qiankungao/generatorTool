@@ -72,7 +72,7 @@ func GenCurd() {
 func CreateCURD(data *entry.CurdSqlInfo) {
 	// 写入markdown
 	dir, _ := os.Getwd()
-	file := dir + "/" + "struct.go"
+	file := dir + "/output/models/" + "struct.go"
 	tools.CreateFileIfHasDel(file)
 	tplByte, err := ioutil.ReadFile(config.TPL_My_CURD)
 	if err != nil {

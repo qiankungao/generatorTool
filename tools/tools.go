@@ -30,6 +30,7 @@ func CreateFile(path string) bool {
 	file, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0666)
 	defer file.Close()
 	if err != nil {
+		fmt.Println("err:",err.Error())
 		return false
 	}
 	return true
@@ -119,6 +120,21 @@ func Gofmt(path string) bool {
 	}
 	return false
 }
+//GetRootDir 获取执行路径
+func GetExeRootDir() string {
+	//// 文件不存在获取执行路径
+	//file, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	//if err != nil {
+	//	file = fmt.Sprintf(".%s", string(os.PathSeparator))
+	//} else {
+	//	file = fmt.Sprintf("%s%s", file, string(os.PathSeparator))
+	//}
+
+	dir, _ := os.Getwd()
+	return dir
+}
+
+
 func ExecCommand(name string, args ...string) bool {
 	cmd := exec.Command(name, args...)
 	_, err := cmd.Output()
