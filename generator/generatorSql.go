@@ -1,7 +1,10 @@
-package main
+package generator
 
 import (
 	"bytes"
+	"github.com/1975210542/generatorTools/config"
+	"github.com/1975210542/generatorTools/entry"
+	"github.com/1975210542/generatorTools/tools"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -12,7 +15,7 @@ import (
 )
 
 func ReadFileToAst(path string) (f *ast.File, err error) {
-	src := ReadFile(path)
+	src := tools.ReadFile(path)
 	fset := token.NewFileSet()
 	f, err = parser.ParseFile(fset, "", src, parser.ParseComments)
 	if err != nil {
@@ -41,10 +44,10 @@ func GetCommentAndName(genDecl *ast.GenDecl) (string, string) {
 
 func GeneratorSql() {
 	f, _ := ReadFileToAst("user.go")
-	data := new(SqlData)
+	data := new(entry.SqlData)
 	for _, node := range f.Decls {
 		genDecl := node.(*ast.GenDecl)
-		desc := new(SqlDataChild)
+		desc := new(entry.SqlDataChild)
 		desc.Comment, desc.TableName = GetCommentAndName(genDecl) //基于机结构体的注释
 
 		for _, field := range genDecl.Specs {
@@ -64,7 +67,7 @@ func GeneratorSql() {
 	CreateSql(data)
 }
 
-func StructToSql(tt *ast.StructType, desc *SqlDataChild) *SqlDataChild {
+func StructToSql(tt *ast.StructType, desc *entry.SqlDataChild) *entry.SqlDataChild {
 
 	for i, field := range tt.Fields.List {
 		fieldName := field.Names[0].Name
@@ -99,7 +102,7 @@ func StructToSql(tt *ast.StructType, desc *SqlDataChild) *SqlDataChild {
 			}
 			delete(tagMap, "size")
 		}
-		desc.List = append(desc.List, &SqlDesc{
+		desc.List = append(desc.List, &entry.SqlDesc{
 			Index:   i,
 			Name:    fieldName,
 			Type:    fieldTYpe,
@@ -112,16 +115,16 @@ func StructToSql(tt *ast.StructType, desc *SqlDataChild) *SqlDataChild {
 
 //data.DescList = append(data.DescList, desc)
 func GetStructComment(str string) []string {
-	text := ReplaceStr(str, "//@", "")
+	text := tools.ReplaceStr(str, "//@", "")
 	text = strings.TrimSpace(text)
 	return strings.Split(text, " ")
 }
 
 func FiledToMap(srcTag string) (tm map[string]string) {
 	tm = make(map[string]string, 0)
-	srcTag = CleanQuote(srcTag)
+	srcTag = tools.CleanQuote(srcTag)
 	srcTag = strings.TrimPrefix(srcTag, "db:")
-	srcTag = CleanDoubleQuotes(srcTag)
+	srcTag = tools.CleanDoubleQuotes(srcTag)
 	for _, s := range strings.Split(srcTag, ";") {
 		preS := strings.Split(s, ":")
 		if len(preS) == 2 {
@@ -145,15 +148,15 @@ func GetColumnComment(comment string) string {
 }
 
 func GetColumnType(name string) string {
-	return GoTypeToMysqlType[name]
+	return entry.GoTypeToMysqlType[name]
 }
 
-func CreateSql(data *SqlData) {
+func CreateSql(data *entry.SqlData) {
 	// 写入markdown
 	dir, _ := os.Getwd()
 	file := dir + "/" + "struct.sql"
-	CreateFileIfHasDel(file)
-	tplByte, err := ioutil.ReadFile(TPL_SQL)
+	tools.CreateFileIfHasDel(file)
+	tplByte, err := ioutil.ReadFile(config.TPL_SQL)
 	if err != nil {
 		return
 	}
@@ -165,7 +168,7 @@ func CreateSql(data *SqlData) {
 		return
 	}
 	// 表信息写入文件
-	err = WriteAppendFile(file, content.String())
+	err = tools.WriteAppendFile(file, content.String())
 	if err != nil {
 		return
 	}
