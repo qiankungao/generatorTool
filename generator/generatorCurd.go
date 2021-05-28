@@ -30,6 +30,7 @@ func generatorOne(f *ast.File, outputPath string) {
 		switch t := node.(type) {
 		case *ast.TypeSpec:
 			data.StructTableName = t.Name.Name
+			data.TableName = tools.Lcfirst(t.Name.Name)
 			data.UpperTableName = strings.ToLower(t.Name.Name)
 		case *ast.StructType:
 			allFields := []string{}
@@ -45,7 +46,7 @@ func generatorOne(f *ast.File, outputPath string) {
 					}
 				}
 				//判断tag是否配置primaryKey
-				tagMap := FiledToMap(field.Tag.Value)
+				tagMap := filedToMap(field.Tag.Value)
 				if _, ok := tagMap["primaryKey"]; ok {
 					data.PrimaryKey = fieldName
 				}
@@ -82,7 +83,7 @@ func generatorOne(f *ast.File, outputPath string) {
 func createCURD(data *entry.CurdSqlInfo, outputPath string) {
 	// 写入markdown
 	dir, _ := os.Getwd()
-	file := dir + outputPath + "/" + data.StructTableName + ".go"
+	file := dir + outputPath + "/" + data.TableName + ".go"
 	tools.CreateFileIfHasDel(file)
 	tplByte, err := ioutil.ReadFile(config.TPL_My_CURD)
 	if err != nil {

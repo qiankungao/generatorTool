@@ -25,10 +25,10 @@ func ReadFileToAst(path string) (f *ast.File, err error) {
 	return f, nil
 }
 
-func GetCommentAndName(genDecl *ast.GenDecl) (string, string) {
+func getCommentAndName(genDecl *ast.GenDecl) (string, string) {
 	comment, tableName := "", ""
 	for _, field := range genDecl.Doc.List { //基于机结构体的注释
-		text := GetStructComment(field.Text)
+		text := getStructComment(field.Text)
 		if len(text) < 2 {
 			continue
 		}
@@ -47,19 +47,19 @@ func GeneratorSql(scanPath, outputPath string) {
 	data := new(entry.SqlData)
 	for _, ff := range fs {
 		for _, f := range ff.Files {
-			oneInfo := GeneratorOne(f)
+			oneInfo := generatorOneSql(f)
 			data.DescList = append(data.DescList, oneInfo.DescList...)
 		}
 	}
-	CreateSql(data, outputPath)
+	createSql(data, outputPath)
 }
 
-func GeneratorOne(f *ast.File) *entry.SqlData {
+func generatorOneSql(f *ast.File) *entry.SqlData {
 	data := new(entry.SqlData)
 	for _, node := range f.Decls {
 		genDecl := node.(*ast.GenDecl)
 		desc := new(entry.SqlDataChild)
-		desc.Comment, desc.TableName = GetCommentAndName(genDecl) //基于机结构体的注释
+		desc.Comment, desc.TableName = getCommentAndName(genDecl) //基于机结构体的注释
 		for _, field := range genDecl.Specs {
 			switch t := field.(type) {
 			case *ast.TypeSpec: //表名
@@ -68,7 +68,7 @@ func GeneratorOne(f *ast.File) *entry.SqlData {
 				}
 				switch tt := t.Type.(type) {
 				case *ast.StructType:
-					desc = StructToSql(tt, desc)
+					desc = structToSql(tt, desc)
 				}
 			}
 		}
@@ -77,7 +77,7 @@ func GeneratorOne(f *ast.File) *entry.SqlData {
 	return data
 }
 
-func StructToSql(tt *ast.StructType, desc *entry.SqlDataChild) *entry.SqlDataChild {
+func structToSql(tt *ast.StructType, desc *entry.SqlDataChild) *entry.SqlDataChild {
 
 	for i, field := range tt.Fields.List {
 		fieldName := field.Names[0].Name
@@ -88,7 +88,7 @@ func StructToSql(tt *ast.StructType, desc *entry.SqlDataChild) *entry.SqlDataChi
 			}
 		}
 		//判断tag是否配置primaryKey
-		tagMap := FiledToMap(field.Tag.Value)
+		tagMap := filedToMap(field.Tag.Value)
 		if _, ok := tagMap["primaryKey"]; ok {
 			desc.PrimaryKey = fieldName
 			delete(tagMap, "primaryKey")
@@ -103,7 +103,7 @@ func StructToSql(tt *ast.StructType, desc *entry.SqlDataChild) *entry.SqlDataChi
 		}
 
 		//是否配置了size
-		fieldTYpe := GetColumnType(field.Type.(*ast.Ident).Name)
+		fieldTYpe := getColumnType(field.Type.(*ast.Ident).Name)
 		if size, ok := tagMap["size"]; ok {
 			if fieldTYpe == "varchar(255)" {
 				fieldTYpe = "varchar(" + size + ")"
@@ -116,21 +116,21 @@ func StructToSql(tt *ast.StructType, desc *entry.SqlDataChild) *entry.SqlDataChi
 			Index:   i,
 			Name:    fieldName,
 			Type:    fieldTYpe,
-			Tag:     GetFieldTag(tagMap),
-			Comment: GetColumnComment(field.Comment.Text()),
+			Tag:     getFieldTag(tagMap),
+			Comment: getColumnComment(field.Comment.Text()),
 		})
 	}
 	return desc
 }
 
 //data.DescList = append(data.DescList, desc)
-func GetStructComment(str string) []string {
+func getStructComment(str string) []string {
 	text := tools.ReplaceStr(str, "//@", "")
 	text = strings.TrimSpace(text)
 	return strings.Split(text, " ")
 }
 
-func FiledToMap(srcTag string) (tm map[string]string) {
+func filedToMap(srcTag string) (tm map[string]string) {
 	tm = make(map[string]string, 0)
 	srcTag = tools.CleanQuote(srcTag)
 	srcTag = strings.TrimPrefix(srcTag, "db:")
@@ -145,7 +145,7 @@ func FiledToMap(srcTag string) (tm map[string]string) {
 	}
 	return
 }
-func GetFieldTag(srcTag map[string]string) string {
+func getFieldTag(srcTag map[string]string) string {
 	targetTag := ""
 	for _, s := range srcTag {
 		targetTag += s + " "
@@ -153,15 +153,15 @@ func GetFieldTag(srcTag map[string]string) string {
 	return targetTag
 }
 
-func GetColumnComment(comment string) string {
+func getColumnComment(comment string) string {
 	return "COMMENT" + "'" + strings.TrimSpace(comment) + "'"
 }
 
-func GetColumnType(name string) string {
+func getColumnType(name string) string {
 	return entry.GoTypeToMysqlType[name]
 }
 
-func CreateSql(data *entry.SqlData, outputPath string) {
+func createSql(data *entry.SqlData, outputPath string) {
 	// 写入markdown
 	dir, _ := os.Getwd()
 	file := dir + outputPath + "/" + "struct.sql"

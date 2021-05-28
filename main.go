@@ -52,6 +52,5 @@ func Run() error {
 	if db == nil || err != nil {
 		return errors.New("database connect failed>>" + err.Error())
 	}
-	//update(db)
 	return nil
 }
