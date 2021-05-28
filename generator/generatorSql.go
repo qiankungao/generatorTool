@@ -41,15 +41,25 @@ func GetCommentAndName(genDecl *ast.GenDecl) (string, string) {
 	}
 	return comment, tableName
 }
+func GeneratorSql(scanPath, outputPath string) {
+	fset := token.NewFileSet()
+	fs, _ := parser.ParseDir(fset, scanPath, nil, parser.ParseComments)
+	data := new(entry.SqlData)
+	for _, ff := range fs {
+		for _, f := range ff.Files {
+			oneInfo := GeneratorOne(f)
+			data.DescList = append(data.DescList, oneInfo.DescList...)
+		}
+	}
+	CreateSql(data, outputPath)
+}
 
-func GeneratorSql() {
-	f, _ := ReadFileToAst("user.go")
+func GeneratorOne(f *ast.File) *entry.SqlData {
 	data := new(entry.SqlData)
 	for _, node := range f.Decls {
 		genDecl := node.(*ast.GenDecl)
 		desc := new(entry.SqlDataChild)
 		desc.Comment, desc.TableName = GetCommentAndName(genDecl) //基于机结构体的注释
-
 		for _, field := range genDecl.Specs {
 			switch t := field.(type) {
 			case *ast.TypeSpec: //表名
@@ -64,7 +74,7 @@ func GeneratorSql() {
 		}
 		data.DescList = append(data.DescList, desc)
 	}
-	CreateSql(data)
+	return data
 }
 
 func StructToSql(tt *ast.StructType, desc *entry.SqlDataChild) *entry.SqlDataChild {
@@ -151,10 +161,10 @@ func GetColumnType(name string) string {
 	return entry.GoTypeToMysqlType[name]
 }
 
-func CreateSql(data *entry.SqlData) {
+func CreateSql(data *entry.SqlData, outputPath string) {
 	// 写入markdown
 	dir, _ := os.Getwd()
-	file := dir + "/" + "struct.sql"
+	file := dir + outputPath + "/" + "struct.sql"
 	tools.CreateFileIfHasDel(file)
 	tplByte, err := ioutil.ReadFile(config.TPL_SQL)
 	if err != nil {

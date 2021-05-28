@@ -2,49 +2,36 @@ package main
 
 import (
 	"errors"
+	"flag"
+	"fmt"
 	"github.com/1975210542/generatorTools/db"
 	"github.com/1975210542/generatorTools/generator"
 )
 
-/*
+var (
+	scanPath      string
+	outputPath    string
+	generatorType string
+)
 
-	func (s *{{.Name}}Select) Query(ctx context.Context, db *sql.DB) ([]*game.{{.Name}}, error) {
-	sqlStr, args, err := s.handler.ToSql()
-	if err != nil {
-		return nil, err
-	}
-	rows, err := db.QueryContext(ctx, sqlStr, args...)
-	if err != nil {
-		return nil, err
-	}
-	results := make([]*game.{{.Name}}, 0)
-	columns, _ := rows.Columns()
-	dest := make([]interface{}, 0, len(columns))
-
-	for _, v := range columns {
-		dest = append(dest, s.fieldMap[v])
-	}
-	for rows.Next() {
-		result := &game.{{.Name}}{}
-		err := rows.Scan(dest...)
-		if err != nil {
-			return nil, err
-		}
-		{{range $k, $v := .Cols}}
-		result.{{$v.Name}} = s.tmp.{{$v.Name}}
-		{{end}}
-		results = append(results, result)
-	}
-	return results, nil
+func init() {
+	flag.StringVar(&scanPath, "scanPath", "model", "scanPath")
+	flag.StringVar(&outputPath, "outputPath", "/output/mysql", "outputPath")
+	flag.StringVar(&generatorType, "generatorType", "db", "generatorType")
 }
 
-
-*/
-
 func main() {
+	flag.Parse()
+	fmt.Println("scanPath:", scanPath)
+	fmt.Println("scanPath:", outputPath)
 
-	generator.GenCurd()
-	//generator.GeneratorSql()
+	switch generatorType {
+	case "sql":
+		generator.GeneratorSql(scanPath, outputPath)
+	case "db":
+		generator.GeneratorCurd(scanPath, outputPath)
+	}
+
 	//Run()
 }
 
@@ -68,26 +55,3 @@ func Run() error {
 	//update(db)
 	return nil
 }
-
-//func command() {
-//	//初使工作
-//	DbModel := NewDB()
-//	DbModel.Using(Conn)
-//	DbModel.DBName = DbConn.DBName
-//
-//	dir, _ := os.Getwd()
-//	logic := &Logic{
-//		DB:   DbModel,
-//		Path: dir + "/" + DefaultSavePath + DS, //默认当前命令所在目录
-//	}
-//	err := logic.DB.GetTableNameAndComment()
-//	if err != nil {
-//
-//	}
-//
-//	commands := NewCommands(logic)
-//	formats = []string{"json", "db"}
-//	commands.GenerateEntry([]string{})
-//	commands.GenerateCURD([]string{})
-//	//commands.MarkDown([]string{})
-//}

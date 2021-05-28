@@ -1,6 +1,5 @@
 package entry
 
-
 type SqlData struct {
 	DescList []*SqlDataChild
 }
@@ -12,6 +11,7 @@ type SqlDataChild struct {
 	PrimaryKey string //主键
 	List       []*SqlDesc
 }
+
 // 表结构详情
 type SqlDesc struct {
 	Index   int
@@ -20,7 +20,6 @@ type SqlDesc struct {
 	Tag     string //tag
 	Comment string // 备注
 }
-
 
 type CurdSqlInfo struct {
 	TableName           string              // 表名
@@ -57,8 +56,6 @@ type NullSqlFieldInfo struct {
 	OriFieldType string // 原数据库类型
 	Comment      string // 字段注释
 }
-
-
 
 var GoTypeToMysqlType = map[string]string{
 	"string":  "varchar(255)",

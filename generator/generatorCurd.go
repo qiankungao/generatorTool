@@ -6,14 +6,25 @@ import (
 	"github.com/1975210542/generatorTools/entry"
 	"github.com/1975210542/generatorTools/tools"
 	"go/ast"
+	"go/parser"
+	"go/token"
 	"io/ioutil"
 	"os"
 	"strings"
 	"text/template"
 )
 
-func GenCurd() {
-	f, _ := ReadFileToAst("user.go")
+func GeneratorCurd(scanPath, outputPath string) {
+	fset := token.NewFileSet()
+	fs, _ := parser.ParseDir(fset, scanPath, nil, parser.ParseComments)
+	for _, ff := range fs {
+		for _, f := range ff.Files {
+			generatorOne(f, outputPath)
+		}
+	}
+}
+
+func generatorOne(f *ast.File, outputPath string) {
 	data := new(entry.CurdSqlInfo)
 	ast.Inspect(f, func(node ast.Node) bool {
 		switch t := node.(type) {
@@ -64,15 +75,14 @@ func GenCurd() {
 		}
 		return true
 	})
-
-	CreateCURD(data)
+	createCURD(data, outputPath)
 
 }
 
-func CreateCURD(data *entry.CurdSqlInfo) {
+func createCURD(data *entry.CurdSqlInfo, outputPath string) {
 	// 写入markdown
 	dir, _ := os.Getwd()
-	file := dir + "/output/models/" + "struct.go"
+	file := dir + outputPath + "/" + data.StructTableName + ".go"
 	tools.CreateFileIfHasDel(file)
 	tplByte, err := ioutil.ReadFile(config.TPL_My_CURD)
 	if err != nil {
