@@ -1,4 +1,4 @@
-package main
+package model
 
 import (
 "database/sql"
@@ -113,8 +113,8 @@ func (m *{{.StructTableName}}Model) Joins(join string) *{{.StructTableName}}Mode
 
 
 // 获取多行数据.
-func (m *{{.StructTableName}}Model) getRows(db *sql.DB,sqlTxt string, params ...interface{}) (rowsResult []*{{.StructTableName}}, err error) {
-    query, err := db.Query(sqlTxt, params...)
+func (m *{{.StructTableName}}Model) getRows(ctx context.Context,sqlTxt string, params ...interface{}) (rowsResult []*{{.StructTableName}}, err error) {
+    query, err := m.DB.QueryContext(ctx,sqlTxt, params...)
     if err != nil {
         fmt.Println(err)
         return
@@ -144,8 +144,8 @@ func (m *{{.StructTableName}}Model) getRows(db *sql.DB,sqlTxt string, params ...
 }
 
 //获取单行
-func (m *{{.StructTableName}}Model) getRow(db *sql.DB,sqlText string, params ...interface{}) (rowResult *{{.StructTableName}}, err error) {
-    query := m.DB.QueryRow(sqlText, params...)
+func (m *{{.StructTableName}}Model) getRow(ctx context.Context,db *sql.DB,sqlText string, params ...interface{}) (rowResult *{{.StructTableName}}, err error) {
+    query := m.DB.QueryRowContext(ctx,sqlText, params...)
         row := {{.StructTableName}}{}
         err = query.Scan(
        {{range .FieldsInfo}}&row.{{.HumpName}},// {{.Comment}}
@@ -159,8 +159,8 @@ func (m *{{.StructTableName}}Model) getRow(db *sql.DB,sqlText string, params ...
 }
 
 // 保存数据
-func (m *{{.StructTableName}}Model) Save(sqlTxt string, value ...interface{}) (b bool, err error) {
-    stmt, err := m.DB.Prepare(sqlTxt)
+func (m *{{.StructTableName}}Model) Save(ctx context.Context,sqlTxt string, value ...interface{}) (b bool, err error) {
+    stmt, err := m.DB.PrepareContext(ctx, sqlTxt)
     if err != nil {
         fmt.Println(err)
         return
@@ -182,8 +182,8 @@ func (m *{{.StructTableName}}Model) Save(sqlTxt string, value ...interface{}) (b
 }
 
 // _更新数据Tx
-func (m *{{.StructTableName}}Model) SaveTx(tx *sql.Tx,sqlTxt string, value ...interface{}) (b bool, err error) {
-    stmt, err := tx.Prepare(sqlTxt)
+func (m *{{.StructTableName}}Model) SaveTx(ctx context.Context,tx *sql.Tx,sqlTxt string, value ...interface{}) (b bool, err error) {
+    stmt, err := tx.PrepareContext(ctx,sqlTxt)
     if err != nil {
         fmt.Println(err)
         return
@@ -230,7 +230,7 @@ func (m *{{.StructTableName}}Model) Create() (lastId int64, err error) {
 }
 
 // 获取单行数据
-func (m *{{.StructTableName}}Model) Find(id ...int64) (result []*User, err error) {
+func (m *{{.StructTableName}}Model) Find(ctx context.Context,id ...int64) (result []*{{.StructTableName}}, err error) {
 	columns := strings.Join(m.columns,",")
 	if columns == "" {
 		columns = m.getColumns()
@@ -254,25 +254,25 @@ func (m *{{.StructTableName}}Model) Find(id ...int64) (result []*User, err error
     }
     sqlText := "SELECT " + columns + " FROM " + "user" + whereField + or + join + limit
 
-	result, err = m.getRows(m.DB, sqlText, m.val...)
+	result, err = m.getRows(ctx, sqlText, m.val...)
 	return
 }
 
 //设置更新字段
 func (m *{{.StructTableName}}Model) Set(fields string,val interface{}) *{{.StructTableName}}Model {
-	m.set = append(m.set, AddQuote(fields)+"=?")
+	m.set = append(m.set, tools.AddQuote(fields)+"=?")
     m.val = append(m.val, val)
 	return m
 }
 
 // 更新数据
-func (m *{{.StructTableName}}Model) Update() (b bool, err error) {
+func (m *{{.StructTableName}}Model) Update(ctx context.Context) (b bool, err error) {
     set := strings.Join(m.set, ",")
     whereField := m.getWhere()
 
     sqlText := "UPDATE " + " user " + " SET " + set + whereField
 
-    return m.Save(sqlText, m.val...)
+    return m.Save(ctx,sqlText, m.val...)
 }
 
 

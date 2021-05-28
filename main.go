@@ -16,8 +16,8 @@ var (
 
 func init() {
 	flag.StringVar(&scanPath, "scanPath", "model", "scanPath")
-	flag.StringVar(&outputPath, "outputPath", "/output/mysql", "outputPath")
-	flag.StringVar(&generatorType, "generatorType", "db", "generatorType")
+	flag.StringVar(&outputPath, "outputPath", "model", "outputPath")
+	flag.StringVar(&generatorType, "generatorType", "curd", "generatorType")
 }
 
 func main() {
@@ -28,7 +28,7 @@ func main() {
 	switch generatorType {
 	case "sql":
 		generator.GeneratorSql(scanPath, outputPath)
-	case "db":
+	case "curd":
 		generator.GeneratorCurd(scanPath, outputPath)
 	}
 

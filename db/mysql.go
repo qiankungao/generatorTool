@@ -46,4 +46,3 @@ func InitDB(cfg DBConfig) (*sql.DB, error) {
 	connection.SetMaxOpenConns(cfg.MaxOpenConn)
 	return connection, nil
 }
-

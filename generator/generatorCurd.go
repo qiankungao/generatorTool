@@ -46,6 +46,9 @@ func generatorOne(f *ast.File, outputPath string) {
 					}
 				}
 				//判断tag是否配置primaryKey
+				if field.Tag == nil {
+					continue
+				}
 				tagMap := filedToMap(field.Tag.Value)
 				if _, ok := tagMap["primaryKey"]; ok {
 					data.PrimaryKey = fieldName
@@ -83,7 +86,7 @@ func generatorOne(f *ast.File, outputPath string) {
 func createCURD(data *entry.CurdSqlInfo, outputPath string) {
 	// 写入markdown
 	dir, _ := os.Getwd()
-	file := dir + outputPath + "/" + data.TableName + ".go"
+	file := dir + "/"+outputPath + "/" + data.TableName + "Model.go"
 	tools.CreateFileIfHasDel(file)
 	tplByte, err := ioutil.ReadFile(config.TPL_My_CURD)
 	if err != nil {
